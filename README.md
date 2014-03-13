@@ -15,4 +15,4 @@ usage
 ----
 
     source venv/bin/activate
-    python -m angel_scraper 1 50
+    python -m angel_api 1 50
