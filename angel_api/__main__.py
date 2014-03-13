@@ -1,7 +1,7 @@
 from .web import app
 import argparse
 from requests.exceptions import HTTPError
-from .scraper import get
+from .api import get
 
 parser = argparse.ArgumentParser()
 parser.add_argument("first", help="first id", type=int)

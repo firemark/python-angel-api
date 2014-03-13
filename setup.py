@@ -10,7 +10,7 @@ requires = [
     'pyes'
 ]
 
-setup(name='Python Angel Scraper',
+setup(name='Python Angel Api',
       version='0.1',
       author='Marek Piechula (firemark)',
       author_email='marpiechula@gmail.com',
