@@ -2,15 +2,12 @@ from .config import ANGEL_URL
 import requests
 
 
-def get(*args):
+def get(*args, params=None):
     str_args = (str(arg) for arg in args)
-    resp = requests.get(ANGEL_URL + "/".join(str_args))
+    resp = requests.get(ANGEL_URL + "/".join(str_args), params=params)
 
-    if resp.status_code == 200:
-        return resp.json()
-    else:
-        #todo
-        return {}
+    resp.raise_for_status()
+    return resp.json()
 
-#GET https://api.angel.co/1/users/155
-#get("users", 155)
+#GET https://api.angel.co/1/users/155?test=test
+#get("users", 155, params=dict(test="test"))
