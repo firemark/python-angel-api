@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 requires = [
     'requests',
     'flask',
-    'pyes'
+    'elasticsearch'
 ]
 
 setup(name='Python Angel Api',
