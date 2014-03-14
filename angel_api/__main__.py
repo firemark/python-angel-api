@@ -1,27 +1,34 @@
 from .web import app
+from .api import get_startup
+
 import argparse
-from requests.exceptions import HTTPError
-from .api import get
+
+from json import dumps
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("first", help="first id", type=int)
-parser.add_argument("last", help="last id", type=int)
-
+parser.add_argument("last", help="last id", type=int, default=None, nargs='?')
 
 if __name__ == '__main__':
     args = parser.parse_args()
 
-    for i in range(args.first, args.last + 1):
-        try:
-            resp = get("startups", i)
-            if resp["hidden"] is False:
+    if args.last is None:
+        print(dumps(
+            get_startup(args.first),
+            sort_keys=True,
+            indent=4,
+            separators=(',', ': ')
+        ))
+    else:
+        for i in range(args.first, args.last + 1):
+            resp = get_startup(i, with_founders=False)
+            if not resp:
+                print("id:", i, "not found")
+            elif not resp["hidden"]:
                 print("id:", i, "name:", resp["name"])
+                #pprint(resp)
             else:
                 print("id:", i, "hidden office")
-        except HTTPError as e:
-            if e.response.status_code != 404:
-                raise e
-            else:
-                print("id:", i, "not found")
 
     #app.run()
