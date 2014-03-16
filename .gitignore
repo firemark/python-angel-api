@@ -1,7 +1,8 @@
-
+config.ini
 venv
 .idea
 *.py[cod]
+
 
 # C extensions
 *.so
