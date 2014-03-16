@@ -1,4 +1,4 @@
-from .config import ANGEL_URL
+from . import config
 from requests.exceptions import HTTPError
 import requests
 
@@ -9,7 +9,7 @@ def get(*args, params=None):
     get("users", 155, params={"test":"test"})
     """
     str_args = (str(arg) for arg in args)
-    resp = requests.get(ANGEL_URL + "/".join(str_args), params=params)
+    resp = requests.get(config.ANGEL_URL + "/".join(str_args), params=params)
 
     resp.raise_for_status()
     return resp.json()

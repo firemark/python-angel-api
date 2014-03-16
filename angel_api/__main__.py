@@ -1,27 +1,26 @@
 from .web import app
 from .api import get_startup
+from .utils import load_config
 
 import argparse
-
-from json import dumps
+from itertools import count
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("first", help="first id", type=int)
-parser.add_argument("last", help="last id", type=int, default=None, nargs='?')
+parser.add_argument("config", type=str, help="path to config file",
+                    default="config.ini", nargs="?")
 
 if __name__ == '__main__':
     args = parser.parse_args()
 
-    if args.last is None:
-        print(dumps(
-            get_startup(args.first),
-            sort_keys=True,
-            indent=4,
-            separators=(',', ': ')
-        ))
-    else:
-        for i in range(args.first, args.last + 1):
+    try:
+        load_config(args.config)
+    except FileNotFoundError as e:
+        print("Config %s not found!" % e.args[0])
+        exit()
+
+    while True:
+        for i in count(1):
             resp = get_startup(i, with_founders=False)
             if not resp:
                 print("id:", i, "not found")
