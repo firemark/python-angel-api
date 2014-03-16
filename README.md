@@ -1,4 +1,4 @@
-python-angelo-scraper
+python-angel-api
 =====================
 
 installing
