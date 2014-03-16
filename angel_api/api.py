@@ -1,7 +1,10 @@
 from . import config
+
 from requests.exceptions import HTTPError
 import requests
+import logging
 
+log = logging.getLogger("angelo-api")
 
 def get(*args, params=None):
     """
@@ -10,6 +13,7 @@ def get(*args, params=None):
     """
     str_args = (str(arg) for arg in args)
     resp = requests.get(config.ANGEL_URL + "/".join(str_args), params=params)
+    log.debug("request url %s", resp.url)
 
     resp.raise_for_status()
     return resp.json()
@@ -37,6 +41,9 @@ def get_startup(startup_id, with_founders=True, with_details=True):
     if startup and not startup["hidden"]:
         roles = get("startups", startup_id, "roles")["startup_roles"]
         if with_founders:
-            startup["founders"] = get_founders_from_roles(roles, with_details=with_details)
+            startup["founders"] = get_founders_from_roles(
+                roles,
+                with_details=with_details
+            )
 
     return startup

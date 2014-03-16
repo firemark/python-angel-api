@@ -1,52 +1,75 @@
 from .web import app
 from .api import get_startup
-from .utils import load_config
+from .utils import load_config_from_file
 from .db import Database
 from . import config
 
 import argparse
+import logging
 from itertools import count
 from requests.exceptions import HTTPError
+from threading import Thread, Lock
+
+log = logging.getLogger("angelo-api")
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument("config", type=str, help="path to config file",
-                    default="config.ini", nargs="?")
-parser.add_argument("--start", type=int, default=1)
+def get_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("config", type=str, help="path to config file",
+                        default="config.ini", nargs="?")
+    parser.add_argument("--start", type=int, default=1)
 
-if __name__ == '__main__':
-    args = parser.parse_args()
+    return parser
 
-    try:
-        load_config(args.config)
-    except FileNotFoundError as e:
-        print("Config %s not found!" % e.args[0])
-        exit()
 
+
+def run(start=1):
     watchdog_counter = 0
+
+    log.info("Start.")
 
     while True:
         for i in count(args.start):
             try:
+
                 watchdog_counter += 1
                 if watchdog_counter > config.watchdog_reset:
+                    log.info("Watchdog activated. Return to id %d", i)
                     break
+
+                log.info("Download startup - id: %d", i)
                 resp = get_startup(i)
 
             except HTTPError as e:
                 http_resp = e.response
-                print("!!!", "id:", i ,"http_code", http_resp.status_code)
-                print(http_resp.json())
+                code = http_resp.status_code
+                log.error("HTTP Error (%i): %s", code, http_resp.json())
+            except KeyboardInterrupt:
+                log.info("Keyboard interrupt :(")
+                exit()
             else:
                 if not resp:
-                    print("id:", i, "not found")
+                    log.warning("id %d not found", i)
                 elif resp["hidden"]:
-                    print("id:", i, "hidden office")
-                    #pprint(resp)
+                    log.warning("id %d is a hidden office", i)
                 else:
                     watchdog_counter = 0
                     Database.index(id=resp["id"], data=resp)
-                    print("id:", i, "name:", resp["name"])
+
+
+account_lock = Lock()
+
+if __name__ == '__main__':
+    parser = get_parser()
+    args = parser.parse_args()
+
+    try:
+        load_config_from_file(args.config)
+    except FileNotFoundError as e:
+        print("Config %s not found!" % e.args[0])
+    else:
+        run(args.start)
+
 
 
     #app.run()

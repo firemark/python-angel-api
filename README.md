@@ -16,5 +16,6 @@ usage
 ----
 
     source venv/bin/activate
-    python -m angel_api 1 50 # returns startups from id 1 to 50
-    python -m angel_api 50 # return big json with id = 50
+    python -m angel_api
+    python -m angel_api config.ini
+    python -m angel_api congig.ini --start 100

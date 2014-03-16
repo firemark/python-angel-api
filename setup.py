@@ -11,7 +11,7 @@ requires = [
 ]
 
 setup(name='Python Angel Api',
-      version='0.1',
+      version='0.4',
       author='Marek Piechula (firemark)',
       author_email='marpiechula@gmail.com',
       url='',
