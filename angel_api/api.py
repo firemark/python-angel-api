@@ -26,8 +26,8 @@ def get_or_none(*args, params=None):
 def get_founders_from_roles(roles, with_details=True):
     ids = (r["id"] for r in roles if r["role"] == "founder")
 
-    #params = {"include_details": "investor"} if with_details else None
-    users = (get_or_none(user_id) for user_id in ids)
+    params = {"include_details": "investor"} if with_details else None
+    users = (get_or_none("users", user_id, params=params) for user_id in ids)
 
     return [user for user in users if user is not None]
 
@@ -37,7 +37,6 @@ def get_startup(startup_id, with_founders=True, with_details=True):
     if startup and not startup["hidden"]:
         roles = get("startups", startup_id, "roles")["startup_roles"]
         if with_founders:
-            startup["roles"] = roles
             startup["founders"] = get_founders_from_roles(roles, with_details=with_details)
 
     return startup
