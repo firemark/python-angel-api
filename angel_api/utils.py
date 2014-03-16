@@ -68,6 +68,13 @@ def load_config(cfg):
     if config.has_account:
         config.client_id = account["client_id"]
         config.client_secret = account["client_secret"]
+        config.access_token = account.get("access_token")
     else:
         config.client_id = ""
         config.client_secret = ""
+        config.access_token = None
+
+    web = cfg["web"]
+
+    config.host = web["host"]
+    config.port = int(web["port"])

@@ -1,16 +1,10 @@
 from .web import app
-from .api import get_startup
 from .utils import load_config_from_file
-from .db import Database
+from .run import run
 from . import config
 
 import argparse
-import logging
-from itertools import count
-from requests.exceptions import HTTPError
-from threading import Thread, Lock
-
-log = logging.getLogger("angelo-api")
+from threading import Thread
 
 
 def get_parser():
@@ -21,44 +15,6 @@ def get_parser():
 
     return parser
 
-
-
-def run(start=1):
-    watchdog_counter = 0
-
-    log.info("Start.")
-
-    while True:
-        for i in count(args.start):
-            try:
-
-                watchdog_counter += 1
-                if watchdog_counter > config.watchdog_reset:
-                    log.info("Watchdog activated. Return to id %d", i)
-                    break
-
-                log.info("Download startup - id: %d", i)
-                resp = get_startup(i)
-
-            except HTTPError as e:
-                http_resp = e.response
-                code = http_resp.status_code
-                log.error("HTTP Error (%i): %s", code, http_resp.json())
-            except KeyboardInterrupt:
-                log.info("Keyboard interrupt :(")
-                exit()
-            else:
-                if not resp:
-                    log.warning("id %d not found", i)
-                elif resp["hidden"]:
-                    log.warning("id %d is a hidden office", i)
-                else:
-                    watchdog_counter = 0
-                    Database.index(id=resp["id"], data=resp)
-
-
-account_lock = Lock()
-
 if __name__ == '__main__':
     parser = get_parser()
     args = parser.parse_args()
@@ -68,8 +24,7 @@ if __name__ == '__main__':
     except FileNotFoundError as e:
         print("Config %s not found!" % e.args[0])
     else:
-        run(args.start)
-
-
-
-    #app.run()
+        api_thread = Thread(target=run, args=(args.start,))
+        api_thread.start()
+        if config.has_account and not config.access_token:
+            app.run(config.host, config.port)
