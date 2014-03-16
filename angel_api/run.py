@@ -4,18 +4,26 @@ from . import config
 
 from itertools import count
 from requests.exceptions import HTTPError
+from datetime import datetime, timedelta
+from time import sleep
 
 import logging
 
 log = logging.getLogger("angelo-api")
 
+
 def run(start=1):
+
     watchdog_counter = 0
+    requests_counter = 0
 
     log.info("Start.")
 
     if config.has_account:
         get_access_token()
+
+    if config.brute_force:
+        last_time = datetime.now()
 
     while True:
         for i in count(start):
@@ -26,7 +34,24 @@ def run(start=1):
                     log.info("Watchdog activated. Return to id %d", i)
                     break
 
+                requests_counter += 1
+                if requests_counter > config.requests_per_hour:
+                    last_time += timedelta(hours=1)
+                    delta = last_time - datetime.now()
+
+                    if delta.days >= 0:
+                        log.info(
+                            "The number of requests has reached the limit (%d)."
+                            " Waiting %dm %ds",
+                            config.requests_per_hour,
+                            delta.seconds / 60,
+                            delta.seconds % 60
+                        )
+                        sleep(delta.seconds)
+                        requests_counter = 0
+
                 log.info("Download startup - id: %d", i)
+
                 resp = get_startup(i)
 
             except HTTPError as e:

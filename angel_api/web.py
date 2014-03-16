@@ -10,7 +10,7 @@ def oauth():
 
     #shutdown server
     func = request.environ.get('werkzeug.server.shutdown')
-    if func is not  None:
+    if func is not None:
         func()
 
     return 'Thanks!'

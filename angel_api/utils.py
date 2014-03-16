@@ -35,6 +35,7 @@ def load_config(cfg):
 
     config.brute_force = yes_or_no(app["brute_force"])
     config.watchdog_reset = int(app.get('watchdog_reset', 20))
+    config.requests_per_hour = int(app.get("requests_per_hour", 1000))
 
     cfg_log = cfg['logging']
 
