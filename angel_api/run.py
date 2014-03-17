@@ -22,7 +22,7 @@ def run(start=1):
     if config.has_account:
         get_access_token()
 
-    if config.brute_force:
+    if not config.brute_force:
         last_time = datetime.now()
 
     while True:
@@ -34,21 +34,24 @@ def run(start=1):
                     log.info("Watchdog activated. Return to id %d", i)
                     break
 
-                requests_counter += 1
-                if requests_counter > config.requests_per_hour:
-                    last_time += timedelta(hours=1)
-                    delta = last_time - datetime.now()
 
-                    if delta.days >= 0:
-                        log.info(
-                            "The number of requests has reached the limit (%d)."
-                            " Waiting %dm %ds",
-                            config.requests_per_hour,
-                            delta.seconds / 60,
-                            delta.seconds % 60
-                        )
-                        sleep(delta.seconds)
-                        requests_counter = 0
+                if not config.brute_force:
+                    requests_counter += 1
+                    if requests_counter > config.requests_per_hour:
+                        last_time += timedelta(hours=1)
+                        delta = last_time - datetime.now()
+
+                        if delta.days >= 0:
+                            log.info(
+                                "The number of requests has "
+                                "reached the limit (%d). "
+                                "Waiting %dm %ds",
+                                config.requests_per_hour,
+                                delta.seconds / 60,
+                                delta.seconds % 60
+                            )
+                            sleep(delta.seconds)
+                            requests_counter = 0
 
                 log.info("Download startup - id: %d", i)
 
