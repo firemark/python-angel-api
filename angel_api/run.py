@@ -67,8 +67,9 @@ def run(start=1):
             else:
                 if not resp:
                     log.warning("id %d not found", i)
-                elif resp["hidden"]:
-                    log.warning("id %d is a hidden office", i)
                 else:
                     watchdog_counter = 0
-                    Database.index(id=resp["id"], data=resp)
+                    if resp["hidden"]:
+                        log.warning("id %d is a hidden office", i)
+                    else:
+                        Database.index(id=resp["id"], data=resp)
