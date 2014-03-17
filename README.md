@@ -1,4 +1,4 @@
-python-angelo-scraper
+python-angel-api
 =====================
 
 installing
@@ -19,3 +19,9 @@ usage
     python -m angel_api
     python -m angel_api config.ini
     python -m angel_api congig.ini --start 100
+
+requirements
+----
+    python3.3 (in python2.7 not tested)
+    virtualenv (in ubuntu package python-virtualenv)
+    ElasticSearch server
