@@ -31,7 +31,8 @@ def run(start=1):
 
                 watchdog_counter += 1
                 if watchdog_counter > config.watchdog_reset:
-                    log.info("Watchdog activated. Return to id %d", i)
+                    log.info("Watchdog activated. Return to id %d", start)
+                    watchdog_counter = 0
                     break
 
 
