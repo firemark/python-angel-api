@@ -26,16 +26,21 @@ def load_config_from_file(file):
 
 def load_config(cfg):
 
+    es = cfg['elasticsearch']
+
     config.elastic_hosts = [
         host.strip() for host
-        in cfg['elasticsearch']["hosts"].split(",")
+        in es["hosts"].split(",")
     ]
+
+    config.index_name = es["index_name"]
 
     app = cfg['app']
 
     config.brute_force = yes_or_no(app["brute_force"])
     config.watchdog_reset = int(app.get('watchdog_reset', 20))
     config.requests_per_hour = int(app.get("requests_per_hour", 1000))
+    config.round_trip = yes_or_no(app.get("round_trip", "no"))
 
     cfg_log = cfg['logging']
 
@@ -53,6 +58,10 @@ def load_config(cfg):
         handler = logging.StreamHandler(stderr)
 
     log_level = getattr(logging, cfg_log.get("level", "INFO").upper())
+
+    logging.getLogger('elasticsearch').setLevel(logging.ERROR)
+    logging.getLogger('urllib3').setLevel(logging.ERROR)
+
     handler.setLevel(log_level)
     handler.setFormatter(
         logging.Formatter(

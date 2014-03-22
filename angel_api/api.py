@@ -3,6 +3,7 @@ from . import config
 
 from requests.exceptions import HTTPError
 from threading import Event
+from time import sleep
 import requests
 import logging
 
@@ -21,6 +22,9 @@ def get(*args, params=None):
     if config.access_token:
         params["access_token"] = config.access_token
     resp = requests.get(config.ANGEL_URL + "/".join(str_args), params=params)
+
+    if config.round_trip:
+        sleep(3600 / config.requests_per_hour)
     log.debug("request url %s", resp.url)
 
     resp.raise_for_status()
