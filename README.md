@@ -19,6 +19,7 @@ usage
     python -m angel_api
     python -m angel_api config.ini
     python -m angel_api congig.ini --start 100
+    python -m angel_api --continuous
 
 requirements
 ----

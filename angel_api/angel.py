@@ -10,20 +10,20 @@ import logging
 
 log = logging.getLogger("angelo-api")
 
-class WatchdogError(Exception):
-    pass
-
 
 class AngelService(object):
 
     watchdog_counter = 0
     requests_counter = 0
     last_time = None
+    continuous = False
+    is_reset = False
     start = 1
-    setup = False
 
-    def __init__(self, start=1):
+
+    def __init__(self, start=1, continuous=False):
         self.start = start
+        self.continuous = continuous
 
         if config.has_account:
             get_access_token()
@@ -32,19 +32,36 @@ class AngelService(object):
             self.last_time = datetime.now()
 
     def exists_ids(self):
-        for i in count(self.start):
-            if not Database.exists(id=i, doc_type="not_exists"):
-                yield i
+        while True:
+            for i in count(self.start):
+
+                if not Database.exists(id=i, doc_type="not_exists"):
+                    yield i
+
+                    if self.is_reset:
+                        self.is_reset = False
+                        if not self.continuous:
+                            raise StopIteration()
+                        else:
+                            break
+
+
+    def reset(self):
+        self.watchdog_counter = 0
+        self.is_reset = True
+        if self.continuous:
+            log.info("Return to id %d", self.start)
 
     def increase_watchdog(self):
         self.watchdog_counter += 1
 
-        if self.watchdog_counter > config.watchdog_reset:
-            log.info("Watchdog activated. Return to id %d", start)
-            self.watchdog_counter = 0
-            raise WatchdogError()
+    def execute_watchdog(self):
+        if self.watchdog_counter >= config.watchdog_reset:
+            log.info("Watchdog activated.")
+            self.reset()
 
-    def increate_request_counter(self):
+
+    def increase_request_counter(self):
 
         if not config.brute_force:
             self.requests_counter += 1
@@ -66,11 +83,15 @@ class AngelService(object):
 
     def get(self, i):
 
+        self.increase_request_counter()
         self.increase_watchdog()
-        self.increate_request_counter()
 
         log.info("Download startup - id: %d", i)
-        return get_startup(i)
+        data = get_startup(i)
+
+        self.execute_watchdog()
+
+        return data
 
     def add_to_db(self, i, resp):
 
@@ -78,11 +99,15 @@ class AngelService(object):
             log.warning("id %d not found", i)
             Database.index(id=i, data={"hidden": False},
                            doc_type="not_exists")
-        else:
-            self.watchdog_counter = 0
-            if resp["hidden"]:
-                log.warning("id %d is a hidden office", i)
-                Database.index(id=i, data={"hidden": True},
-                               doc_type="not_exists")
-            else:
-                Database.index(id=i, data=resp)
+            return False
+
+        self.watchdog_counter = 0
+        if resp["hidden"]:
+            log.warning("id %d is a hidden office", i)
+            Database.index(id=i, data={"hidden": True},
+                           doc_type="not_exists")
+            return False
+
+        Database.index(id=i, data=resp)
+
+        return True
