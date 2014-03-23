@@ -25,3 +25,14 @@ class Database(object):
     def exists(cls, id, doc_type="data"):
         return cls.get_db().exists(index=config.index_name,
                                    id=id, doc_type=doc_type)
+
+    @classmethod
+    def search(cls, query, doc_type="data"):
+        body = {"query": {"match": query}}
+        resp = cls.get_db().search(index=config.index_name, doc_type=doc_type,
+                                   body=body, fields="", size=1)
+
+        try:
+            return resp["hits"]["hits"][0]["_id"]
+        except IndexError:
+            return None
