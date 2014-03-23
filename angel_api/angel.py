@@ -1,4 +1,4 @@
-from .api import get_startup, get_access_token
+from .api import api
 from .db import Database
 from . import config
 
@@ -26,7 +26,7 @@ class AngelService(object):
         self.continuous = continuous
 
         if config.has_account:
-            get_access_token()
+            api.get_access_token()
 
         if not config.brute_force:
             self.last_time = datetime.now()
@@ -87,7 +87,7 @@ class AngelService(object):
         self.increase_watchdog()
 
         log.info("Download startup - id: %d", i)
-        data = get_startup(i)
+        data = api.get_startup(i)
 
         self.execute_watchdog()
 
