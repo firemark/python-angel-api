@@ -1,6 +1,7 @@
 from . import config
 
 from elasticsearch import Elasticsearch
+from elasticsearch.exceptions import NotFoundError
 
 
 
@@ -25,6 +26,18 @@ class Database(object):
     def exists(cls, id, doc_type="data"):
         return cls.get_db().exists(index=config.index_name,
                                    id=id, doc_type=doc_type)
+
+    @classmethod
+    def get(cls, id, doc_type="data"):
+
+        try:
+            resp = cls.get_db().get(index=config.index_name, doc_type=doc_type,
+                                    id=id)
+        except NotFoundError:
+            return None
+        else:
+            return resp["_source"]
+
 
     @classmethod
     def search(cls, query, doc_type="data"):

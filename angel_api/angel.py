@@ -5,6 +5,7 @@ from . import config
 from itertools import count
 from datetime import datetime, timedelta
 from time import sleep
+
 import logging
 
 
@@ -19,6 +20,7 @@ class AngelService(object):
     continuous = False
     is_reset = False
     start = 1
+    datetime_format = "%Y-%m-%dT%H:%M:%SZ"
 
 
     def __init__(self, start=1, continuous=False):
@@ -93,6 +95,10 @@ class AngelService(object):
 
         return data
 
+    @classmethod
+    def convert_date(cls, dct):
+        return datetime.strptime(dct["updated_at"], cls.datetime_format)
+
     def add_to_db(self, i, resp):
 
         if not resp:
@@ -108,6 +114,14 @@ class AngelService(object):
                            doc_type="not_exists")
             return False
 
-        Database.index(id=i, data=resp)
+        data = Database.get(id=i, doc_type="data")
+
+        if data is None:
+            Database.index(id=i, data=resp)
+        else:
+            data_date = self.convert_date(data)
+            resp_date = self.convert_date(resp)
+            if data_date > resp_date:
+                Database.index(id=i, data=resp)
 
         return True
