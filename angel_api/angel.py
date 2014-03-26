@@ -21,6 +21,7 @@ class AngelService(object):
     is_reset = False
     start = 1
     datetime_format = "%Y-%m-%dT%H:%M:%SZ"
+    max_id = 1
 
 
     def __init__(self, start=1, continuous=False):
@@ -33,19 +34,40 @@ class AngelService(object):
         if not config.brute_force:
             self.last_time = datetime.now()
 
-    def exists_ids(self):
+        resp = Database.get(index=config.index_config_name, doc_type="cfg",
+                                id="ids")
+
+        self.max_id = resp["max_id"] if resp is not None else 1
+
+    def exiting_ids(self):
+
         while True:
             for i in count(self.start):
 
-                if not Database.exists(id=i, doc_type="not_exists"):
+                if not i % 20:
+                    resp = Database.get(index=config.index_config_name,
+                                        doc_type="cfg",
+                                        id="ids")
+
+                    new_max_id = resp["max_id"] if resp is not None else 1
+                    if new_max_id < self.max_id:
+                        Database.index(data={"max_id": self.max_id}, id="ids",
+                                       index=config.index_config_name,
+                                       doc_type="cfg")
+                    else:
+                        self.max_id = new_max_id
+
+                if (self.max_id < i or
+                        not Database.exists(id=i, doc_type="not_exists")):
                     yield i
 
-                    if self.is_reset:
-                        self.is_reset = False
-                        if not self.continuous:
-                            raise StopIteration()
-                        else:
-                            break
+                if self.is_reset:
+                    self.is_reset = False
+
+                    if not self.continuous:
+                        raise StopIteration()
+                    else:
+                        break
 
 
     def reset(self):
@@ -107,7 +129,10 @@ class AngelService(object):
                            doc_type="not_exists")
             return False
 
+        if self.max_id < i:
+            self.max_id = i
         self.watchdog_counter = 0
+
         if resp["hidden"]:
             log.warning("id %d is a hidden office", i)
             Database.index(id=i, data={"hidden": True},

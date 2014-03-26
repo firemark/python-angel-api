@@ -16,22 +16,25 @@ class Database(object):
         return cls._db
 
     @classmethod
-    def index(cls, id, data, doc_type="data"):
-        return cls.get_db().index(index=config.index_name,
+    def index(cls, id, data, doc_type="data", index=""):
+        index = index or config.index_name
+        return cls.get_db().index(index=index,
                                   doc_type=doc_type,
                                   refresh=True,
                                   id=id, body=data)
 
     @classmethod
-    def exists(cls, id, doc_type="data"):
-        return cls.get_db().exists(index=config.index_name,
+    def exists(cls, id, doc_type="data", index=""):
+        index = index or config.index_name
+        return cls.get_db().exists(index=index,
                                    id=id, doc_type=doc_type)
 
     @classmethod
-    def get(cls, id, doc_type="data"):
+    def get(cls, id, doc_type="data", index=""):
+        index = index or config.index_name
 
         try:
-            resp = cls.get_db().get(index=config.index_name, doc_type=doc_type,
+            resp = cls.get_db().get(index=index, doc_type=doc_type,
                                     id=id)
         except NotFoundError:
             return None
@@ -40,9 +43,10 @@ class Database(object):
 
 
     @classmethod
-    def search(cls, query, doc_type="data"):
+    def search(cls, query, doc_type="data", index=""):
+        index = index or config.index_name
         body = {"query": {"match": query}}
-        resp = cls.get_db().search(index=config.index_name, doc_type=doc_type,
+        resp = cls.get_db().search(index=index, doc_type=doc_type,
                                    body=body, fields="", size=1)
 
         try:

@@ -18,7 +18,7 @@ def run(start=1, continuous=False):
     log.info("Start.")
     service = AngelService(start=start, continuous=continuous)
 
-    for i in service.exists_ids():
+    for i in service.exiting_ids():
         try:
             resp = service.get(i)
             service.add_to_db(i, resp)
@@ -36,4 +36,8 @@ def run(start=1, continuous=False):
 
         except KeyboardInterrupt:
             log.info("Keyboard interrupt :(")
+            service.reset()
             exit()
+        except Exception as e:
+            service.reset()
+            raise e

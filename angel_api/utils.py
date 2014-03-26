@@ -34,6 +34,7 @@ def load_config(cfg):
     ]
 
     config.index_name = es["index_name"]
+    config.index_config_name = es.get("index_config_name", "config")
 
     app = cfg['app']
 
