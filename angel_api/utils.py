@@ -42,6 +42,7 @@ def load_config(cfg):
     config.watchdog_reset = int(app.get('watchdog_reset', 20))
     config.requests_per_hour = int(app.get("requests_per_hour", 1000))
     config.round_trip = yes_or_no(app.get("round_trip", "no"))
+    config.delay_connection = int(app.get("delay_connection", 60))
 
     cfg_log = cfg['logging']
 
