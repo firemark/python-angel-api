@@ -1,16 +1,20 @@
 from . import config
+from .db import Database
 
-from requests.exceptions import HTTPError
+from requests.exceptions import HTTPError, ConnectionError
 from threading import Event
 from time import sleep
-from .db import Database
+
+
 import requests
 import logging
+import re
 
 log = logging.getLogger("angelo-api")
 
 account_event = Event()
 code = None
+re_max_id = re.compile(r"(\d+) Companies")
 
 class AngelApi(object):
 
@@ -58,6 +62,24 @@ class AngelApi(object):
         print("Access token is: ", access_token)
 
         config.access_token = access_token
+
+    def get_max_id(self):
+        """Get count of startups"""
+
+        try:
+            resp = requests.get("https://angel.co/companies")
+            resp.raise_for_status()
+        except ConnectionError:
+            log.warning("Connection error in https://angel.co/companies")
+            return 0
+
+        searched = re_max_id.search(resp.text)
+        if not searched:
+            log.warning("Count of companies not found in "
+                        "https://angel.co/companies")
+            return 0
+
+        return int(searched.group(1))
 
     def get_or_none(self, *args, params=None):
         try:

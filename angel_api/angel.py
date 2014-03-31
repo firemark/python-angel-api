@@ -23,7 +23,6 @@ class AngelService(object):
     datetime_format = "%Y-%m-%dT%H:%M:%SZ"
     max_id = 1
 
-
     def __init__(self, start=1, continuous=False):
         self.start = start
         self.continuous = continuous
@@ -35,15 +34,19 @@ class AngelService(object):
             self.last_time = datetime.now()
 
         resp = Database.get(index=config.index_config_name, doc_type="cfg",
-                                id="ids")
+                            id="ids")
 
-        self.max_id = resp["max_id"] if resp is not None else 1
+        db_max_id = resp["max_id"] if resp is not None else 1
+
+        self.max_id = max(db_max_id, api.get_max_id())
 
     def exiting_ids(self):
+        """Generator sends ids to get and save to database"""
 
         while True:
             for i in count(self.start):
 
+                #save max_id every 20 cycle
                 if not i % 20:
                     resp = Database.get(index=config.index_config_name,
                                         doc_type="cfg",
@@ -69,8 +72,8 @@ class AngelService(object):
                     else:
                         break
 
-
     def reset(self):
+        """set flag is_reset to true and reset counters"""
         self.watchdog_counter = 0
         self.is_reset = True
         if self.continuous:
@@ -83,7 +86,6 @@ class AngelService(object):
         if self.watchdog_counter >= config.watchdog_reset:
             log.info("Watchdog activated.")
             self.reset()
-
 
     def increase_request_counter(self):
 
@@ -106,6 +108,7 @@ class AngelService(object):
                     self.requests_counter = 0
 
     def get(self, i):
+        """download startup from api"""
 
         self.increase_request_counter()
         self.increase_watchdog()

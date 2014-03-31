@@ -18,7 +18,16 @@ def run(start=1, continuous=False):
 
     try:
         log.info("Start.")
-        service = AngelService(start=start, continuous=continuous)
+        while True:
+            try:
+                service = AngelService(start=start, continuous=continuous)
+            except TransportError as e:
+                log.error("ES Critical Error (while creating service: %s)"
+                          ", waiting %d seconds", e,
+                          config.delay_connection)
+                sleep(config.delay_connection)
+            else:
+                break
 
         for i in service.exiting_ids():
             try:
