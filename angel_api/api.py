@@ -5,7 +5,6 @@ from requests.exceptions import HTTPError, ConnectionError
 from threading import Event
 from time import sleep
 
-
 import requests
 import logging
 import re
@@ -15,6 +14,7 @@ log = logging.getLogger("angelo-api")
 account_event = Event()
 code = None
 re_max_id = re.compile(r"(\d+) Companies")
+
 
 class AngelApi(object):
 
@@ -90,7 +90,7 @@ class AngelApi(object):
             return None
 
     def get_founders_from_roles(self, roles, with_details=True):
-        ids = (r["id"] for r in roles if r["role"] == "founder")
+        ids = (r["tagged"]["id"] for r in roles)
 
         params = {"include_details": "investor"} if with_details else None
         users = (
