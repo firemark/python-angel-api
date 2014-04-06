@@ -2,7 +2,7 @@ from . import config
 
 from configparser import ConfigParser
 from logging import handlers
-from sys import stderr
+from sys import stderr, stdout
 import logging
 
 
@@ -48,7 +48,7 @@ def load_config(cfg):
 
     log_filename = cfg_log.get('filename')
 
-    if log_filename:
+    if log_filename and log_filename not in ['stderr', 'stdout']:
         if yes_or_no(cfg_log["time_rotating"]):
             handler = handlers.TimedRotatingFileHandler(
                 filename=log_filename,
@@ -57,7 +57,8 @@ def load_config(cfg):
         else:
             handler = logging.StreamHandler(log_filename)
     else:
-        handler = logging.StreamHandler(stderr)
+        stream = stdout if log_filename == "stdout" else stderr
+        handler = logging.StreamHandler(stream)
 
     log_level = getattr(logging, cfg_log.get("level", "INFO").upper())
 
