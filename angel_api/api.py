@@ -1,8 +1,10 @@
 from . import config
 
 from requests.exceptions import HTTPError, ConnectionError
+from datetime import datetime, timedelta
 from threading import Event
 from time import sleep
+
 
 import requests
 import logging
@@ -16,6 +18,35 @@ re_max_id = re.compile(r"(\d+) Companies")
 
 
 class AngelApi(object):
+
+    requests_counter = 0
+    last_time = datetime(2000, 1, 1)
+
+    def __init__(self):
+
+        if not config.brute_force:
+            self.last_time = datetime.now()
+
+    def increase_request_counter(self):
+
+        if not config.brute_force:
+            self.requests_counter += 1
+            print(self.requests_counter)
+            if self.requests_counter > config.requests_per_hour:
+                self.last_time += timedelta(hours=1)
+                delta = self.last_time - datetime.now()
+
+                if delta.days >= 0:
+                    log.info(
+                        "The number of requests has "
+                        "reached the limit (%d). "
+                        "Waiting %dm %ds",
+                        config.requests_per_hour,
+                        delta.seconds / 60,
+                        delta.seconds % 60
+                    )
+                    sleep(delta.seconds)
+                    self.requests_counter = 0
 
     def get(self, *args, params=None):
         """
@@ -33,6 +64,8 @@ class AngelApi(object):
 
         if config.round_trip:
             sleep(3600 / config.requests_per_hour)
+
+        self.increase_request_counter()
 
         log.debug("request url %s code %s", resp.url, resp.status_code)
 

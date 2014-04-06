@@ -1,8 +1,7 @@
 from . import config
 
 from itertools import count
-from datetime import datetime, timedelta
-from time import sleep
+from datetime import datetime
 
 import logging
 
@@ -13,7 +12,6 @@ log = logging.getLogger("angelo-api")
 class AngelService(object):
 
     watchdog_counter = 0
-    requests_counter = 0
     last_time = None
     continuous = False
     is_reset = False
@@ -28,14 +26,11 @@ class AngelService(object):
         self.start = start
         self.continuous = continuous
 
-        self.rest_api = api_class()
+        self.api = api_class()
         self.db = db_class()
 
         if config.has_account:
             self.api.get_access_token()
-
-        if not config.brute_force:
-            self.last_time = datetime.now()
 
         resp = self.db.get(index=config.index_config_name, doc_type="cfg",
                            id="ids")
@@ -91,30 +86,9 @@ class AngelService(object):
             log.info("Watchdog activated.")
             self.reset()
 
-    def increase_request_counter(self):
-
-        if not config.brute_force:
-            self.requests_counter += 1
-            if self.requests_counter > config.requests_per_hour:
-                self.last_time += timedelta(hours=1)
-                delta = self.last_time - datetime.now()
-
-                if delta.days >= 0:
-                    log.info(
-                        "The number of requests has "
-                        "reached the limit (%d). "
-                        "Waiting %dm %ds",
-                        config.requests_per_hour,
-                        delta.seconds / 60,
-                        delta.seconds % 60
-                    )
-                    sleep(delta.seconds)
-                    self.requests_counter = 0
-
     def get(self, i):
         """download startup from api"""
 
-        self.increase_request_counter()
         self.increase_watchdog()
 
         log.info("Download startup - id: %d", i)
