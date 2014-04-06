@@ -1,5 +1,3 @@
-from .api import api
-from .db import Database
 from . import config
 
 from itertools import count
@@ -23,45 +21,51 @@ class AngelService(object):
     datetime_format = "%Y-%m-%dT%H:%M:%SZ"
     max_id = 1
 
-    def __init__(self, start=1, continuous=False):
+    rest_api = None
+    db = None
+
+    def __init__(self, api_class, db_class, start=1, continuous=False):
         self.start = start
         self.continuous = continuous
 
+        self.rest_api = api_class()
+        self.db = db_class()
+
         if config.has_account:
-            api.get_access_token()
+            self.api.get_access_token()
 
         if not config.brute_force:
             self.last_time = datetime.now()
 
-        resp = Database.get(index=config.index_config_name, doc_type="cfg",
-                            id="ids")
+        resp = self.db.get(index=config.index_config_name, doc_type="cfg",
+                           id="ids")
 
         db_max_id = resp["max_id"] if resp is not None else 1
 
-        self.max_id = max(db_max_id, api.get_max_id())
+        self.max_id = max(db_max_id, self.api.get_max_id())
 
     def exiting_ids(self):
-        """Generator sends ids to get and save to database"""
+        """Generator sends ids to get and save to self.db"""
 
         while True:
             for i in count(self.start):
 
                 #save max_id every 20 cycle
                 if not i % 20:
-                    resp = Database.get(index=config.index_config_name,
-                                        doc_type="cfg",
-                                        id="ids")
+                    resp = self.db.get(index=config.index_config_name,
+                                       doc_type="cfg",
+                                       id="ids")
 
                     new_max_id = resp["max_id"] if resp is not None else 1
                     if new_max_id < self.max_id:
-                        Database.index(data={"max_id": self.max_id}, id="ids",
-                                       index=config.index_config_name,
-                                       doc_type="cfg")
+                        self.db.index(data={"max_id": self.max_id}, id="ids",
+                                      index=config.index_config_name,
+                                      doc_type="cfg")
                     else:
                         self.max_id = new_max_id
 
                 if (self.max_id < i or
-                        not Database.exists(id=i, doc_type="not_exists")):
+                        not self.db.exists(id=i, doc_type="not_exists")):
                     yield i
 
                 if self.is_reset:
@@ -114,7 +118,7 @@ class AngelService(object):
         self.increase_watchdog()
 
         log.info("Download startup - id: %d", i)
-        data = api.get_startup(i)
+        data = self.api.get_startup(i)
 
         self.execute_watchdog()
 
@@ -128,7 +132,7 @@ class AngelService(object):
 
         if not resp:
             log.warning("id %d not found", i)
-            Database.index(id=i, data={"hidden": False},
+            self.db.index(id=i, data={"hidden": False},
                            doc_type="not_exists")
             return False
 
@@ -138,18 +142,18 @@ class AngelService(object):
 
         if resp["hidden"]:
             log.warning("id %d is a hidden office", i)
-            Database.index(id=i, data={"hidden": True},
+            self.db.index(id=i, data={"hidden": True},
                            doc_type="not_exists")
             return False
 
-        data = Database.get(id=i, doc_type="data")
+        data = self.db.get(id=i, doc_type="data")
 
         if data is None:
-            Database.index(id=i, data=resp)
+            self.db.index(id=i, data=resp)
         else:
             data_date = self.convert_date(data)
             resp_date = self.convert_date(resp)
             if data_date > resp_date:
-                Database.index(id=i, data=resp)
+                self.db.index(id=i, data=resp)
 
         return True

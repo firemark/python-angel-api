@@ -1,7 +1,6 @@
-from .db import Database
 
 from . import config
-from .angel import AngelService
+from importlib import import_module
 
 from time import sleep
 from requests.exceptions import HTTPError
@@ -14,13 +13,26 @@ import logging
 log = logging.getLogger("angelo-api")
 
 
+def get_class(module_str):
+    *module_name, class_name = module_str.split(".")
+    module = import_module(".".join(module_name))
+    return getattr(module, class_name)
+
 def run(start=1, continuous=False):
+
+    service_class = get_class(config.service_module)
+    db_class = get_class(config.db_module)
+    api_class = get_class(config.rest_api_module)
 
     try:
         log.info("Start.")
         while True:
             try:
-                service = AngelService(start=start, continuous=continuous)
+                service = service_class(
+                            api_class=api_class,
+                            db_class=db_class,
+                            start=start,
+                            continuous=continuous)
             except TransportError as e:
                 log.error("ES Critical Error (while creating service: %s)"
                           ", waiting %d seconds", e,

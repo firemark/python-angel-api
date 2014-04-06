@@ -8,6 +8,7 @@ import logging
 
 log = logging.getLogger("angelo-api")
 
+
 def yes_or_no(obj):
     if obj == "yes":
         return True
@@ -16,6 +17,7 @@ def yes_or_no(obj):
 
     raise TypeError(obj)
 
+
 def load_config_from_file(file):
     cfg = ConfigParser()
 
@@ -23,6 +25,7 @@ def load_config_from_file(file):
         raise FileNotFoundError(file)
 
     load_config(cfg)
+
 
 def load_config(cfg):
 
@@ -43,6 +46,12 @@ def load_config(cfg):
     config.requests_per_hour = int(app.get("requests_per_hour", 1000))
     config.round_trip = yes_or_no(app.get("round_trip", "no"))
     config.delay_connection = int(app.get("delay_connection", 60))
+
+    config.service_module = app.get("service_module",
+                                    "angel_api.angel.AngelService")
+    config.db_module = app.get("db_module",
+                               "angel_api.db.Database")
+    config.rest_api_module = app.get("rest_api_module", "angel_api.db.Database")
 
     cfg_log = cfg['logging']
 
