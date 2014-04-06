@@ -157,3 +157,14 @@ class AngelService(object):
                 self.db.index(id=i, data=resp)
 
         return True
+
+
+    def get_startup_by_name(self, name, with_founders=True, with_details=True):
+        startup_id = self.db.search({"name": name})
+
+        if startup_id is None:
+            return None
+
+        return self.get_startup(startup_id,
+                                with_founders=with_founders,
+                                with_details=with_details)

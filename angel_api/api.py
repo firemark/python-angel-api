@@ -1,5 +1,4 @@
 from . import config
-from .db import Database
 
 from requests.exceptions import HTTPError, ConnectionError
 from threading import Event
@@ -112,14 +111,3 @@ class AngelApi(object):
                 )
 
         return startup
-
-    def get_startup_by_name(self, name, with_founders=True, with_details=True):
-
-        startup_id = Database.search({"name": name})
-        if startup_id is None:
-            return None
-        return self.get_startup(startup_id,
-                                with_founders=with_founders,
-                                with_details=with_details)
-
-api = AngelApi()
